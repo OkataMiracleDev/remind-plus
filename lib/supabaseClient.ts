@@ -31,7 +31,7 @@ export const signUp = async (
       emailRedirectTo: siteUrl ? `${siteUrl}/auth/login` : undefined,
       data: {
         name: name || '',
-        role,
+        role, // <- saved into Supabase user_metadata
         onboardingComplete: false
       }
     }
@@ -45,6 +45,18 @@ export const signIn = async (email: string, password: string) => {
     password
   })
   return { data, error }
+}
+
+// ✅ New helper: sign in and get fresh user with role
+export const signInAndGetRole = async (email: string, password: string) => {
+  const { data: signInData, error: signInError } = await signIn(email, password)
+  if (signInError) return { data: null, error: signInError }
+
+  // Fetch fresh user to get updated user_metadata (role)
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError) return { data: null, error: userError }
+
+  return { data: userData.user, error: null }
 }
 
 export const signOut = async () => {
