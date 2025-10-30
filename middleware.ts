@@ -51,10 +51,14 @@ export async function middleware(req: NextRequest) {
     error,
   })
 
+  // ✅ Fix: Small delay to ensure cookie propagation before redirect
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
   if (req.nextUrl.pathname.startsWith('/auth/login') && session) {
     const role = session.user.user_metadata?.role
     const target = role === 'admin' ? '/admin' : '/user'
     console.log(`🔁 Redirecting logged-in user (${role}) → ${target}`)
+    await wait(1000) // delay 1s for cookie sync
     return NextResponse.redirect(new URL(target, req.url))
   }
 
