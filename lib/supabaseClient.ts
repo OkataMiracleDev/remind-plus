@@ -22,11 +22,13 @@ export const signUp = async (
   name?: string,
   role: 'admin' | 'user' = 'user'
 ) => {
+  const siteEnv = process.env.NEXT_PUBLIC_SITE_URL
+  const siteUrl = siteEnv ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/login` : undefined,
+      emailRedirectTo: siteUrl ? `${siteUrl}/auth/login` : undefined,
       data: {
         name: name || '',
         role,
