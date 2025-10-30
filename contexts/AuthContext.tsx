@@ -7,7 +7,7 @@ type AuthContextValue = {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<{ data: any }>
   signOut: () => Promise<void>
   signUp: (email: string, password: string, name?: string, role?: 'admin' | 'user') => Promise<void>
 }
@@ -40,8 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setLoading(true)
     try {
-      const { error } = await clientSignIn(email, password)
+      const { data, error } = await clientSignIn(email, password)
       if (error) throw error
+      return { data }
     } finally {
       setLoading(false)
     }
