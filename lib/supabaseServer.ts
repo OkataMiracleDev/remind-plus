@@ -9,33 +9,41 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error("Missing Supabase server environment variables")
 }
 
-// ✅ Admin client — bypasses RLS for privileged operations
+// Admin client (no RLS)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-// ✅ Server-side client — respects RLS and user sessions
+// ✅ Fix: handle both sync and async versions of `cookies()`
 export const createServerSupabaseClient = () => {
-  const cookieStore = cookies() // ✅ FIXED: cookies() is synchronous in Next.js 15+
+  const maybeCookies = cookies()
+  const cookieStore =
+    typeof (maybeCookies as any).then === "function"
+      ? // @ts-ignore handle older type that returns Promise
+        (async () => await maybeCookies)()
+      : maybeCookies
 
   return createServerClient(
     supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        async get(name: string) {
+          const store = await cookieStore
+          return store.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        async set(name: string, value: string, options: any) {
+          const store = await cookieStore
           try {
-            cookieStore.set({ name, value, ...options })
+            store.set({ name, value, ...options })
           } catch {
             // ignored during SSR
           }
         },
-        remove(name: string, options: any) {
+        async remove(name: string, options: any) {
+          const store = await cookieStore
           try {
-            cookieStore.delete({ name, ...options })
+            store.delete({ name, ...options })
           } catch {
             // ignored during SSR
           }
@@ -45,7 +53,7 @@ export const createServerSupabaseClient = () => {
   )
 }
 
-// ✅ Get current authenticated user on the server
+// Get current authenticated user
 export const getServerUser = async () => {
   const supabase = createServerSupabaseClient()
   const {
@@ -55,7 +63,7 @@ export const getServerUser = async () => {
   return { user, error }
 }
 
-// ✅ Get current session on the server
+// Get current session
 export const getServerSession = async () => {
   const supabase = createServerSupabaseClient()
   const {
