@@ -32,8 +32,12 @@ model TeamUser {
   id     String @id @default(cuid())
   teamId String
   userId String
-  team   Team   @relation(fields: [teamId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+
+  team   Team @relation(fields: [teamId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
+
+  // 👇 Added to support upsert(where: { teamId_userId: ... })
+  @@unique([teamId, userId])
 }
 
 model Reminder {
@@ -46,6 +50,7 @@ model Reminder {
   teamId          String
   createdByUserId String
   isCompleted     Boolean  @default(false)
-  team            Team     @relation(fields: [teamId], references: [id])
-  creator         User     @relation(fields: [createdByUserId], references: [id])
+
+  team    Team @relation(fields: [teamId], references: [id])
+  creator User @relation(fields: [createdByUserId], references: [id])
 }
