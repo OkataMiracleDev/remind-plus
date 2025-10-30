@@ -14,40 +14,41 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const onSubmit = async () => {
-    setError(null)
-    setLoading(true)
+const onSubmit = async () => {
+  setError(null)
+  setLoading(true)
 
-    try {
-      // Use the new helper to get user with role immediately
-      const { data: user, error: signInError } = await signInAndGetRole(email, password)
+  try {
+    // Sign in and get the user with metadata
+    const { data: user, error: signInError } = await signInAndGetRole(email, password)
 
-      if (signInError || !user) {
-        setError(signInError?.message ?? "Failed to sign in")
-        setLoading(false)
-        return
-      }
-
-      const role = user.user_metadata?.role ?? 'user'
-      const target = role === 'admin' ? '/admin' : '/user'
-
-      // Navigate
-      router.prefetch(target)
-      router.replace(target)
-
-      // Hard redirect fallback
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location.pathname !== target) {
-          window.location.assign(target)
-        }
-      }, 400)
-
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to sign in")
-    } finally {
-      setLoading(false)
+    if (signInError || !user) {
+      setError(signInError?.message ?? "Failed to sign in")
+      return
     }
+
+    const role = user.user_metadata?.role ?? "user"
+    const target = role === "admin" ? "/admin" : "/user"
+
+    // ✅ Add a small delay to ensure Supabase sets cookies before redirect
+    setTimeout(() => {
+      router.replace(target)
+    }, 500)
+
+    // ✅ Optional fallback: reload if the route doesn't change (extra safe)
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.location.pathname !== target) {
+        window.location.assign(target)
+      }
+    }, 1500)
+
+  } catch (e: any) {
+    setError(e?.message ?? "Failed to sign in")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-violet-50 to-cyan-50 dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center px-4">
@@ -63,8 +64,12 @@ export default function LoginPage() {
             <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <Button
+              type="button"
               className="w-full bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400"
-              onClick={onSubmit}
+              onClick={(e) => {
+                e.preventDefault() 
+                onSubmit()
+              }}
               disabled={loading}
             >
               {loading ? 'Signing in…' : 'Sign In'}
