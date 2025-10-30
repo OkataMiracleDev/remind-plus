@@ -3,7 +3,7 @@ import { cn } from "../../lib/utils"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={cn("min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-violet-50 to-cyan-50 dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900")}> 
+    <div className={cn("min-h-screen relative overflow-hidden bg-linear-to-br from-pink-50 via-violet-50 to-cyan-50 dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900")}> 
       <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-pink-300/20 blur-3xl" />
       <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-cyan-300/20 blur-3xl" />
       <header className="sticky top-0 z-10 border-b border-violet-200/60 bg-white/80 backdrop-blur dark:bg-black/70">
