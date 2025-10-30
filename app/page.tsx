@@ -16,8 +16,8 @@ export default function Home() {
       const { data: { session } } = await supabase.auth.getSession()
       const role = session?.user?.user_metadata?.role
       if (session) {
-        if (role === "admin") router.replace("/dashboard/admin")
-        else router.replace("/dashboard/user")
+        if (role === "admin") router.replace("/admin")
+        else router.replace("/user")
       }
     }
     check()

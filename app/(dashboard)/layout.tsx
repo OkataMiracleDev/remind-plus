@@ -10,8 +10,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <Link href="/" className="text-lg font-semibold text-violet-700 dark:text-violet-300">Remind+</Link>
           <nav className="flex gap-4 text-sm">
-            <Link href="/dashboard/user" className="text-pink-700 dark:text-pink-300 hover:underline">User</Link>
-            <Link href="/dashboard/admin" className="text-cyan-700 dark:text-cyan-300 hover:underline">Admin</Link>
+            <Link href="/user" className="text-pink-700 dark:text-pink-300 hover:underline">User</Link>
+            <Link href="/admin" className="text-cyan-700 dark:text-cyan-300 hover:underline">Admin</Link>
             <Link href="/join-team" className="text-violet-700 dark:text-violet-300 hover:underline">Join Team</Link>
           </nav>
         </div>

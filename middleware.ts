@@ -34,19 +34,26 @@ export async function middleware(req: NextRequest) {
   // Refresh session if expired - required for Server Components
   const { data: { session } } = await supabase.auth.getSession()
 
-  // Protect admin routes (role enforcement to be implemented separately via user metadata or table)
+  // If user hits login while already authenticated, send them to their dashboard
+  if (req.nextUrl.pathname.startsWith('/auth/login') && session) {
+    const role = session.user.user_metadata?.role
+    const target = role === 'admin' ? '/admin' : '/user'
+    return NextResponse.redirect(new URL(target, req.url))
+  }
+
+  // Protect admin routes (role enforcement via user metadata)
   if (req.nextUrl.pathname.startsWith('/admin')) {
     if (!session) {
       return NextResponse.redirect(new URL('/auth/login', req.url))
     }
     const role = session.user.user_metadata?.role
     if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard/user', req.url))
+      return NextResponse.redirect(new URL('/user', req.url))
     }
   }
 
-  // Protect dashboard routes
-  if (req.nextUrl.pathname.startsWith('/dashboard') && !session) {
+  // Protect user dashboard routes
+  if (req.nextUrl.pathname.startsWith('/user') && !session) {
     return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
@@ -56,6 +63,6 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/dashboard/:path*'
+    '/user/:path*'
   ]
 }
