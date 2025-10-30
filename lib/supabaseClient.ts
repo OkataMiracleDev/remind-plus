@@ -56,7 +56,21 @@ export const signInAndGetRole = async (email: string, password: string) => {
   const { data: userData, error: userError } = await supabase.auth.getUser()
   if (userError) return { data: null, error: userError }
 
-  return { data: userData.user, error: null }
+  let user = userData.user
+  const currentRole = user?.user_metadata?.role
+
+  // ✅ Robustness: if role is missing, default to 'user' and backfill
+  if (!currentRole && user) {
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: { role: 'user' }
+    })
+    if (!updateError) {
+      const { data: refetch } = await supabase.auth.getUser()
+      user = refetch.user ?? user
+    }
+  }
+
+  return { data: user, error: null }
 }
 
 export const signOut = async () => {
