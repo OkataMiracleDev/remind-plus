@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String?
+  email          String     @unique
+  hashedPassword String
+  role           String     @default("user")
+  teams          TeamUser[]
+  reminders      Reminder[]
+  createdAt      DateTime   @default(now())
+}
+
+model Team {
+  id        String     @id @default(cuid())
+  name      String
+  code      String     @unique
+  color     String?
+  adminId   String
+  members   TeamUser[]
+  reminders Reminder[]
+}
+
+model TeamUser {
+  id     String @id @default(cuid())
+  teamId String
+  userId String
+  team   Team   @relation(fields: [teamId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Reminder {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  date            DateTime
+  time            String
+  recurring       Boolean  @default(false)
+  teamId          String
+  createdByUserId String
+  isCompleted     Boolean  @default(false)
+  team            Team     @relation(fields: [teamId], references: [id])
+  creator         User     @relation(fields: [createdByUserId], references: [id])
+}
