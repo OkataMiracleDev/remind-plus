@@ -21,8 +21,6 @@ export default function LoginPage() {
     try {
       const { data: user, error: signInError } = await signInAndGetRole(email, password)
 
-      console.log("🟢 SIGN-IN RESULT:", { user, signInError })
-
       if (signInError || !user) {
         setError(signInError?.message ?? "Failed to sign in")
         return
@@ -31,36 +29,38 @@ export default function LoginPage() {
       const role = user.user_metadata?.role ?? "user"
       const target = role === "admin" ? "/admin" : "/user"
 
-      // ✅ Wait a bit for Supabase cookies to sync
-      await new Promise((resolve) => setTimeout(resolve, 700))
+      // ✅ Wait until Supabase confirms a valid session
+      let sessionReady = false
+      for (let i = 0; i < 10; i++) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (sessionData.session) {
+          sessionReady = true
+          break
+        }
+        await new Promise((r) => setTimeout(r, 250)) // check every 250ms
+      }
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-      console.log("🟢 CLIENT SESSION AFTER SIGN-IN:", { sessionData, sessionError })
-
-      if (!sessionData?.session) {
-        console.warn("⚠️ No session found after sign-in. Try increasing delay or check middleware.")
+      if (!sessionReady) {
         setError("Session not established. Try again.")
         return
       }
 
-      console.log(`✅ Redirecting ${user.email} (${role}) → ${target}`)
-
+      console.log(`✅ Redirecting ${email} (${role}) → ${target}`)
       router.replace(target)
 
-      // ✅ Optional fallback reload
+      // 🔁 Optional fallback
       setTimeout(() => {
         if (typeof window !== "undefined" && window.location.pathname !== target) {
-          console.log("🔁 Forcing redirect fallback to", target)
           window.location.assign(target)
         }
-      }, 1500)
+      }, 1200)
     } catch (e: any) {
-      console.error("❌ SIGN-IN ERROR:", e)
       setError(e?.message ?? "Failed to sign in")
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-violet-50 to-cyan-50 dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center px-4">
