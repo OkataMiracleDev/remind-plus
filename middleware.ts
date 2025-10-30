@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  let res = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,9 +23,26 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  const { data: { session }, error } = await supabase.auth.getSession()
+  // ✅ Refresh or sync session cookies before checking
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession()
 
-  // 🪵 Log for debugging
+  // ✅ If Supabase updated cookies, apply them to the response
+  const response = res || NextResponse.next()
+  const newAccessToken = session?.access_token
+  if (newAccessToken) {
+    response.cookies.set({
+      name: 'sb-access-token',
+      value: newAccessToken,
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    })
+  }
+
+  // 🪵 Debug logs
   console.log('🧩 MIDDLEWARE SESSION:', {
     path: req.nextUrl.pathname,
     hasSession: !!session,
@@ -58,9 +75,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
-  return res
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/user/:path*']
+  matcher: ['/admin/:path*', '/user/:path*', '/auth/login'],
 }
